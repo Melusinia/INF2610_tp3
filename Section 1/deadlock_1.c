@@ -22,11 +22,12 @@ int flag = 0;
 void* producer(void* arg) {
     while (1) {
         sem_wait(&sem_initial);
-        sem_wait(&sem_critical);
+        sem_wait(&sem_critical); //exclusion mutuelle? détention et attente
         buffer[ip] = rand() % 9 + 1;
         ip = (ip + 1) % BUFFER_SIZE;
+        printf("Producteur produit\n");
         sem_post(&sem_critical);
-        sem_post(&sem_busy);
+        sem_post(&sem_busy); //réquisition
         if (flag)
             break;
     }
@@ -39,6 +40,7 @@ void* consumer(void* arg) {
         sem_wait(&sem_critical);
         int x = buffer[ic];
         ic = (ic + 1) % BUFFER_SIZE;
+        printf("Consommateur consomme\n");
         sem_post(&sem_critical);
         sem_post(&sem_initial);
         if(x == 0){
@@ -73,6 +75,7 @@ int main() {
 
     for(int i = 0; i < N_THREADS; i++){
         pthread_join(prod_thread[i], NULL);
+        printf("join producteur\n");
     }
 
     for(int i = 0; i < N_THREADS_2; i++){
@@ -82,6 +85,7 @@ int main() {
 
     for(int i = 0; i < N_THREADS_2; i++){
         pthread_join(cons_thread[i], NULL);
+        printf("join consommateur\n");
     }
 
     sem_destroy(&sem_initial);
