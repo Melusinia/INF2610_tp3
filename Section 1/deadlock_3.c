@@ -7,13 +7,15 @@
 #include <semaphore.h>
 #define N_THREADS 10
 
+// EXPLIQUER : PAS DE RÉQUISITION
+
 sem_t mutex;
 
 int flag = 0;
 int key;
 
 void* is_this_a_deadlock(void * args) {
-    sem_wait(&mutex);
+    sem_wait(&mutex); // Exclusion mutuelle: Le mutex protège le contenu de la fonction is_this_a_deadlock.
     int a = 0, b = 0, c = 0, d = 0;
     int i, j, k, m, n;
 
@@ -81,7 +83,7 @@ void* is_this_a_deadlock(void * args) {
     }
 
     printf("This function is long but doesn't do much.\n");
-    sem_post(&mutex);
+    sem_post(&mutex); // Exclusion mutuelle: Le mutex est libéré pour permettre à un autre thread d'accéder à la section critique.
 }
 
 int main() {  
@@ -99,3 +101,8 @@ int main() {
 
     return 0;
 }
+
+// Ce programme ne cause pas d'interblocage, car 2 des 4 conditions ne sont pas satifaites. En effet, il n'y a pas de détention et d'attente,
+// puisque les threads attendent seulement une ressource, puis ils n'en demandent pas d'autre une fois celle-ci détennue. De plus, il n'y a pas
+// d'attente circulaire, puisque un thread à la fois prend une ressource, puis la libère pour le prochain thread et ainsi de suite. Donc, aucun
+// thread se retrouve à détenir uen ressource et en demander une seconde déjà prise par un autre thread.

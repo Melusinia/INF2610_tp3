@@ -19,25 +19,28 @@ sem_t sem_critical;
 
 int flag = 0;
 
+// EXPLIQUER: PAS DE RÉQUISITION ET ATTENTE CIRCULAIRE MIEUX
 void* producer(void* arg) {
     while (1) {
-        sem_wait(&sem_initial);
-        sem_wait(&sem_critical); //exclusion mutuelle? détention et attente
+        sem_wait(&sem_initial); // Détention et attente: Le thread peut détenir sem_initial, puis demander sem_critical par la suite.
+        sem_wait(&sem_critical); // Exclusion mutuelle: Le sémaphore sem_critical permet de s'assurer que le buffer est utilisé par un seul thread à la fois.
         buffer[ip] = rand() % 9 + 1;
         ip = (ip + 1) % BUFFER_SIZE;
         printf("Producteur produit\n");
-        sem_post(&sem_critical);
-        sem_post(&sem_busy); //réquisition
+        sem_post(&sem_critical); // Exclusion mutuelle: sem_critical est libéré.
+        sem_post(&sem_busy); // réquisition
         if (flag)
             break;
     }
     pthread_exit(NULL);
 }
 
+// Il y a une possible attente circulaire, puisque consumer et producer attendent tous les deux après sem_critical
+
 void* consumer(void* arg) {
     while (1) {
-        sem_wait(&sem_busy);
-        sem_wait(&sem_critical);
+        sem_wait(&sem_busy); // Détention et attente: Un peu comme pour producer, le thread consumer peut détenir sem_busy, puis demander sem_critical par la suite.
+        sem_wait(&sem_critical); // Exclusion mutuelle: Le sémaphore sem_critical permet de s'assurer que le buffer est utilisé par un seul thread à la fois.
         int x = buffer[ic];
         ic = (ic + 1) % BUFFER_SIZE;
         printf("Consommateur consomme\n");
