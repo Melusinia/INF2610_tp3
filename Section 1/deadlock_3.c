@@ -7,8 +7,6 @@
 #include <semaphore.h>
 #define N_THREADS 10
 
-// EXPLIQUER : PAS DE RÉQUISITION
-
 sem_t mutex;
 
 int flag = 0;
@@ -102,7 +100,9 @@ int main() {
     return 0;
 }
 
+// Il n'y a pas de réquisition, car la ressource allouée (mutex) est libérée par le thread qui la détient.
+
 // Ce programme ne cause pas d'interblocage, car 2 des 4 conditions ne sont pas satifaites. En effet, il n'y a pas de détention et d'attente,
 // puisque les threads attendent seulement une ressource, puis ils n'en demandent pas d'autre une fois celle-ci détennue. De plus, il n'y a pas
-// d'attente circulaire, puisque un thread à la fois prend une ressource, puis la libère pour le prochain thread et ainsi de suite. Donc, aucun
-// thread se retrouve à détenir uen ressource et en demander une seconde déjà prise par un autre thread.
+// d'attente circulaire, puisque un thread à la fois prend une ressource, puis la libère pour le prochain thread et ainsi de suite.
+// Donc, aucun thread se retrouve à détenir uen ressource et en demander une seconde déjà prise par un autre thread.

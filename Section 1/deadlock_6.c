@@ -18,8 +18,9 @@ void* function_that_does_something(void* arg) {
 }
 
 void changeFlag(){
-    if (rand() % 10 == 10)
-        flag = 1;
+    // if (rand() % 10 == 10) // Il ne s'agit pas d'un interblocage parce qu'aucune ressource est partagée, donc aucun mécanisme de synchronisation est utilisé. 
+                              // Toutefois, le programme est en attente infinie parce que la condition ne sera jamais respectée (rand() % 10 donne des chiffres entre 0 et 9).
+    flag = 1;
     printf("Signal called\n");
 }
 

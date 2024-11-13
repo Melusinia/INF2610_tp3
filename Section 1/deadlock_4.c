@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-// EXPLIQUER : PAS DE RÉQUISITION
 #define NUM_THREADS 5
 #define MAX_ROUNDS 3
 
@@ -32,7 +31,7 @@ void* cons(void* arg) {
         }       
         sleep(1);
         rounds++;
-        pthread_mutex_unlock(&locks[left]);
+        pthread_mutex_unlock(&locks[left]); // Pas de réquisition: Les ressources (locks[left], locks[right]) allouées sont libérées par le thread qui les utilise.
         pthread_mutex_unlock(&locks[right]);
     }
 
@@ -58,3 +57,5 @@ int main() {
 
     return 0;
 }
+
+// La situation d'interblocage est connue, il s'agit du problème des philosophes.

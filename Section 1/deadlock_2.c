@@ -3,8 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-//EXPLIQUER : PAS DE RÉQUISITION et dire l'interblocage par son nom...?
-
 int main() {
     int fd[2];
 
@@ -35,6 +33,10 @@ int main() {
     return 0;
 }
 
+// Pas de réquisition: La ressource allouée (le tube) est uniquement libérée par le processus qui la détient à l'aide du close.
+
 // Attente circulaire: Puisque le 1er enfant attent une écriture dans le tube pour pouvoir lire et qu'aucune écriture n'est faite, alors le 1er enfant
 // ne se terminera pas. D'un autre côté, l'écriture n'est pas faite, car le parent (qui doit écrire) attend que ses enfants aient terminé avant d'écrire.
 // Ainsi, les deux processus attendent après l'autre et on se retrouve avec une attente circulaire.
+
+// L'interblocage est de type attente lors de la communication père-fils dans un tube anonyme.

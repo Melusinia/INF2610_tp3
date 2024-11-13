@@ -19,23 +19,27 @@ sem_t sem_critical;
 
 int flag = 0;
 
-// EXPLIQUER: PAS DE RÉQUISITION ET ATTENTE CIRCULAIRE MIEUX
+// Pas de réquisition: Il n'y a pas vraiment de réquisition, car les producteurs et les consommateurs attendent après l'autre
+// seulement lorsque le buffer est plein ou vide. Ainsi, il ne s'agit pas d'une attente infinie et donc il n'y a pas de réquisition.
+
 void* producer(void* arg) {
     while (1) {
         sem_wait(&sem_initial); // Détention et attente: Le thread peut détenir sem_initial, puis demander sem_critical par la suite.
         sem_wait(&sem_critical); // Exclusion mutuelle: Le sémaphore sem_critical permet de s'assurer que le buffer est utilisé par un seul thread à la fois.
         buffer[ip] = rand() % 9 + 1;
         ip = (ip + 1) % BUFFER_SIZE;
-        printf("Producteur produit\n");
         sem_post(&sem_critical); // Exclusion mutuelle: sem_critical est libéré.
-        sem_post(&sem_busy); // réquisition
+        sem_post(&sem_busy); 
         if (flag)
             break;
     }
     pthread_exit(NULL);
 }
 
-// Il y a une possible attente circulaire, puisque consumer et producer attendent tous les deux après sem_critical
+// Il y a une possible attente circulaire, puisque les threads producer et consumer s'attendent mutuellement.
+// Le producteur va attendre qu'il y a de l'espace libre dans le buffer (sem_initial).
+// Le consommateur va attendre que le buffer comporte quelque chose à consommer.
+// Ainsi, les threads s'attendent en boucle ce qui cause une attente circulaire.
 
 void* consumer(void* arg) {
     while (1) {
@@ -43,7 +47,6 @@ void* consumer(void* arg) {
         sem_wait(&sem_critical); // Exclusion mutuelle: Le sémaphore sem_critical permet de s'assurer que le buffer est utilisé par un seul thread à la fois.
         int x = buffer[ic];
         ic = (ic + 1) % BUFFER_SIZE;
-        printf("Consommateur consomme\n");
         sem_post(&sem_critical);
         sem_post(&sem_initial);
         if(x == 0){
@@ -78,17 +81,23 @@ int main() {
 
     for(int i = 0; i < N_THREADS; i++){
         pthread_join(prod_thread[i], NULL);
-        printf("join producteur\n");
     }
 
     for(int i = 0; i < N_THREADS_2; i++){
+        // Nous avons ajouté sem_critical pour l'accès au buffer (ressource partagée), sem_initial pour vérifier qu'il y a
+        // de l'espace dans le buffer. Ainsi, on évite d'écrire par-dessus les chiffres déjà dans le buffer. On copie le
+        // comportement du producteur.
+        sem_wait(&sem_initial);
+        sem_wait(&sem_critical);
         buffer[ip] = 0;
         ip = (ip + 1) % BUFFER_SIZE;
+        sem_post(&sem_critical);
+        sem_post(&sem_busy);
+        // Le consommateur va consommer un zero et va sortir du thread.
     }
 
     for(int i = 0; i < N_THREADS_2; i++){
         pthread_join(cons_thread[i], NULL);
-        printf("join consommateur\n");
     }
 
     sem_destroy(&sem_initial);
@@ -97,3 +106,5 @@ int main() {
 
     return 0;
 }
+
+// Il s'agit d'une situation d'interblocage connue, soit le problème des producteurs/consommateurs.
