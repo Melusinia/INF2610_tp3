@@ -15,30 +15,66 @@ unsigned long calculerAdresseComplete(unsigned int numeroDePage, unsigned long d
 }
 
 void rechercherTLB(struct RequeteMemoire* req, struct SystemeMemoire* mem) {
-	if(req.estDansTLB) {
-		req.adressePhysique = calculerAdresseComplete(req.adresseVirtuelle);
-		req.date = // date de mtn
-		// mettre à jour les autres attributs?
-	} else {
-		req.adressePhysique = 0;
+	for (int i = 0; i < TAILLE_TLB; i++) {
+		if(mem->tlb->entreeValide[i] == 1 && mem->tlb->numeroPage[i] == calculerNumeroDePage(req->adresseVirtuelle)) {
+			req->adressePhysique = calculerAdresseComplete(mem->tlb->numeroCadre[i], calculerDeplacementDansLaPage(req->adresseVirtuelle));
+			mem->tlb->dernierAcces[i] = req->date;
+			req->estDansTLB = 1;
+			return;
+		}
 	}
+	req->adressePhysique = 0;
+	req->estDansTLB = 0;
 }
 
 void rechercherTableDesPages(struct RequeteMemoire* req, struct SystemeMemoire* mem) {
-	if (calculerNumeroDePage(req.adresseVirtuelle) == mem.memoire.numeroPage) {
-		req.adressePhysique = calculerAdresseComplete(req.adresseVirtuelle);
-		// mettre à jour les autres attributs?
-	} else {
-		req.adressePhysique = 0;
+	if(mem->tp->entreeValide[calculerNumeroDePage(req->adresseVirtuelle)]) {
+		req->adressePhysique = calculerAdresseComplete(mem->tp->numeroCadre[calculerNumeroDePage(req->adresseVirtuelle)], calculerDeplacementDansLaPage(req->adresseVirtuelle));
+		req->estDansTablePages = 1;
+		return;
 	}
+	req->adressePhysique = 0;
+	req->estDansTablePages = 0;
 }
 
 void ajouterDansMemoire(struct RequeteMemoire* req, struct SystemeMemoire* mem) {
-	mem.tlb.numeroCadre[0] = 
+	for(int i = 0; i < TAILLE_MEMOIRE; i++) {
+		if (!mem->memoire->utilisee[i]) {
+			mem->memoire->utilisee[i] = 1;
+			mem->memoire->numeroPage[i] = calculerNumeroDePage(req->adresseVirtuelle);
+			mem->memoire->dateCreation[i] = req->date;
+			mem->memoire->dernierAcces[i] = req->date;
+
+			mem->tp->numeroCadre[calculerNumeroDePage(req->adresseVirtuelle)] = i;
+	 		mem->tp->entreeValide[calculerNumeroDePage(req->adresseVirtuelle)] = 1;
+			req->adressePhysique = calculerAdresseComplete(i, calculerDeplacementDansLaPage(req->adresseVirtuelle));
+		}
+	}
+	
+	
 }
 
 void mettreAJourTLB(struct RequeteMemoire* req, struct SystemeMemoire* mem) {
-	// TODO
+	unsigned long dateAncienne = mem->tlb->dateCreation[0];
+	int iAncien = 0;
+	for(int i = 0; i < TAILLE_TLB; i++) {
+		if(!mem->tlb->entreeValide[i]) {
+			iAncien = i;
+			break;
+		}
+		if(mem->tlb->dateCreation[i] < dateAncienne) {
+			dateAncienne = mem->tlb->dateCreation[i];
+			iAncien = i;
+		}
+	}
+	mem->tlb->numeroPage[iAncien] = calculerNumeroDePage(req->adresseVirtuelle);
+	mem->tlb->numeroCadre[iAncien] = mem->tp->numeroCadre[calculerNumeroDePage(req->adresseVirtuelle)];
+	mem->tlb->entreeValide[iAncien] = 1;
+	mem->tlb->dernierAcces[iAncien] = req->date;
+	mem->tlb->dateCreation[iAncien] = req->date;
+
+	req->adressePhysique = calculerAdresseComplete(mem->tlb->numeroCadre[iAncien], calculerDeplacementDansLaPage(req->adresseVirtuelle));
+	req->estDansTLB = 1;
 }
 
 // NE PAS MODIFIER
